@@ -6,7 +6,7 @@ import os
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.language.conversations import ConversationAnalysisClient
 
-from flask import Flask, request, abort
+from flask import Flask, request, abort, render_template
 from linebot.v3 import (
     WebhookHandler
 )
@@ -52,7 +52,7 @@ handler = WebhookHandler(channel_secret)
 configuration = Configuration(
     access_token=channel_access_token
 )
-
+dog_img_url = ''
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -70,9 +70,10 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def message_text(event):
+    global dog_img_url 
     # analyze quey
     result = azure_clu(event.message.text)
-    print(result)
+    # print(result)
 
     intent = result['result']['prediction']['topIntent']
     returnMessages = []
@@ -80,19 +81,19 @@ def message_text(event):
     url = config['Deploy']['URL']+'/static/img/'
 
     def bark():
-        return ImageMessage(original_content_url=url+'bark.gif', preview_image_url=url+'bark.gif')
+        return 'bark.gif'
     def scratch():
-        return ImageMessage(original_content_url=url+'scratch.gif', preview_image_url=url+'scratch.gif')
+        return 'scratch.gif'
     def tail():
-        return ImageMessage(original_content_url=url+'tail.gif', preview_image_url=url+'tail.gif')
+        return 'tail.gif'
     def head():
-        return ImageMessage(original_content_url=url+'head.gif', preview_image_url=url+'head.gif')
+        return 'head.gif'
     def hand():
-        return ImageMessage(original_content_url=url+'hand.gif', preview_image_url=url+'hand.gif')
+        return 'hand.gif'
     def call():
-        return ImageMessage(original_content_url=url+'call.gif', preview_image_url=url+'call.gif')
+        return 'call.gif'
     def catch():
-        return ImageMessage(original_content_url=url+'catch.gif', preview_image_url=url+'catch.gif')
+        return 'catch.gif'
 
 
     dog_movement = {
@@ -106,12 +107,16 @@ def message_text(event):
     }
 
     def dog_response(command):
-        return dog_movement.get(command, lambda: '柴柴不知道你說的是什麼')()
+        imgurl = dog_movement.get(command, lambda: '柴柴不知道你說的是什麼')()
+        return imgurl
     
     if len(result['result']['prediction']['entities']) > 0:
-        returnMessages.append(dog_response(intent))
+        dog_img_url = dog_response(intent)
+        temp_url = url + dog_response(intent)
+        returnMessages.append(
+            ImageMessage(original_content_url=temp_url, preview_image_url=temp_url))
     else:
-        returnMessages.append(TextMessage(text="柴柴不知道你說的是什麼"))
+        returnMessages.append(TextMessage(text="柴柴我不知道你說什麼"))
     
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
@@ -121,7 +126,12 @@ def message_text(event):
                 messages=returnMessages
             )
         )
-
+@app.route("/")
+def home():
+    return render_template('index.html')
+@app.route("/imgurl")
+def products():
+    return {"imgurl": dog_img_url }, 200
 def azure_clu(user_input):
     client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
     with client:
