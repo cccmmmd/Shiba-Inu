@@ -6,34 +6,75 @@
     <title>Document</title>
     <style type="text/css">
         .center {
+            border: 1px solid #aaa;
+            width: 600px;
+            height: 600px;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
             display: flex;
-            align-self: center;
-            justify-content: center
+            align-items: center;
+            justify-content: center;
+        }
+        .center img{
+            height: 80%;
+        }
+        #audio_btn {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="center">
         <img id="dog" src="https://stickershop.line-scdn.net/stickershop/v1/sticker/385523464/android/sticker.png">
+    
+        <button id="audio_btn" href="#" onclick="playAudio()">柴柴的心內話</button>
     </div>
-    <audio id="my_Audio" controls>
-        <source id="wav_src" src="./static/outputaudio.wav" type="audio/wav">
+    <audio id="my_audio" autoplay>
+        <source id="wav_src" src="" type="audio/wav">
     </audio>
+    
 </body>
 <script>
-    let timeoutID = window.setInterval(check, 3000);
+    const checkcommand = window.setInterval(check, 3000);
     const dog_pic = document.getElementById("dog");
-    
+    // clearInterval(checkcommand);
+    let actionnow = '{{dog_img_url}}';
+    let data;
 
     async function check(){
-        const response = await fetch('http://127.0.0.1:5000/imgurl',{ cache: "no-store" });
-        const data = await response.json();
-        if(data.imgurl !='')
-            dog_pic.setAttribute('src', '/static/img/'+data.imgurl)
+        const response = await fetch('http://127.0.0.1:5000/imgurl',{ cache: "no-cache" });
+        data = await response.json();
+        
+        if( data.imgurl !='' && actionnow != data.imgurl){
+            dog_pic.setAttribute('src', '/static/img/'+data.imgurl);
+            actionnow = data.imgurl
             // audio.setAttribute('src', './static/outputaudio.wav');
-            document.getElementById("wav_src").src = './static/'+data.audio
-            document.getElementById("my_Audio").load(); 
-            document.getElementById("my_Audio").current.play();
+            document.getElementById("wav_src").removeAttribute('src');
+            document.getElementById('audio_btn').style.display = 'block';
+            document.getElementById("wav_src").src = './static/' + data.audio
+           
+            
+        }
+    }
+    async function playAudio() {
+        document.getElementById("my_audio").pause();
+        document.getElementById("my_audio").currentTime = 0;
+
+        
+        try {
+            await document.getElementById("my_audio").load(); 
+            document.getElementById("my_audio").play();
+            console.log('Playing...');
+        } catch (err) {
+            console.log(err);
+        }
     }
 </script>
 </html>

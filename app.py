@@ -65,6 +65,8 @@ configuration = Configuration(
     access_token=channel_access_token
 )
 dog_img_url = ''
+file_name = ''
+
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value
@@ -82,7 +84,7 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def message_text(event):
-    global dog_img_url 
+    global dog_img_url, file_name
     # analyze quey
     result = azure_clu(event.message.text)
     # print(result)
@@ -103,9 +105,9 @@ def message_text(event):
     def hand():
         return ['hand.gif','握完要給我點心喔']
     def call():
-        return ['call.gif','叫我嗎?我來了']
+        return ['call.gif','叫我嗎?我來了！等你好久了！']
     def catch():
-        return ['catch.gif','這種小事難不倒我']
+        return ['catch.gif','接球這種小事難不倒我']
 
 
     dog_movement = {
@@ -124,9 +126,9 @@ def message_text(event):
     
     if len(result['result']['prediction']['entities']) > 0:
         dog_img_url = dog_response(intent)[0]
-        temp_url = url + dog_response(intent)[0]
+        file_name = dog_response(intent)[0] + ".wav"
         returnMessages.append(
-            ImageMessage(original_content_url=temp_url, preview_image_url=temp_url))
+            ImageMessage(original_content_url=url + dog_response(intent)[0], preview_image_url=url + dog_response(intent)[0]))
     else:
         returnMessages.append(TextMessage(text="柴柴我不知道你說什麼"))
     
@@ -143,10 +145,15 @@ def message_text(event):
 
 @app.route("/")
 def home():
+    test = os.listdir('static/')
+    for item in test:
+        if item.endswith(".wav"):
+            os.remove(os.path.join('static/', item))
+
     return render_template('index.html')
 @app.route("/imgurl")
 def products():
-    return {"imgurl": dog_img_url, "audio":"outputaudio.wav"}, 200
+    return {"imgurl": dog_img_url, "audio": file_name}, 200
 def azure_clu(user_input):
     client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
     with client:
@@ -174,10 +181,10 @@ def azure_clu(user_input):
         return result
 
 def azure_speech(user_input):
+    global file_name
     # The language of the voice that speaks.
     # if(user_input)
     speech_config.speech_synthesis_voice_name='zh-TW-YunJheNeural'
-    file_name = "outputaudio.wav"
     file_config = speechsdk.audio.AudioOutputConfig(filename='static/'+file_name)
     speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=file_config)
 
@@ -186,7 +193,7 @@ def azure_speech(user_input):
     # Check result
     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
         print("Speech synthesized for text [{}], and the audio was saved to [{}]".format(user_input, file_name))
-        audio_duration = round(librosa.get_duration(path='static/outputaudio.wav')*1000)
+        audio_duration = round(librosa.get_duration(path=f'static/{file_name}')*1000)
         # print(audio_duration)
         return audio_duration
     elif result.reason == speechsdk.ResultReason.Canceled:
