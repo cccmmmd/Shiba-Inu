@@ -4,3 +4,4 @@ configparser
 azure-ai-language-conversations
 azure-cognitiveservices-speech
 librosa
+google-generativeai

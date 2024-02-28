@@ -11,6 +11,15 @@ import os
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.language.conversations import ConversationAnalysisClient
 
+# Gemini
+import pathlib
+import textwrap
+import google.generativeai as genai
+
+from IPython.display import display
+from IPython.display import Markdown
+
+
 from flask import Flask, request, abort, render_template
 from linebot.v3 import (
     WebhookHandler
@@ -47,6 +56,10 @@ clu_endpoint = config['AzureCLU']['END_POINT']
 clu_key = config['AzureCLU']['KEY']
 project_name = config['AzureCLU']['PROJECT_NAME']
 deployment_name = config['AzureCLU']['DEPLOYMENT_NAME']
+
+# Gemini
+genai.configure(api_key=config['Gemini']['GOOGLE_API_KEY'])
+model = genai.GenerativeModel('gemini-pro')
 
 app = Flask(__name__)
 
@@ -87,6 +100,7 @@ def message_text(event):
     global dog_img_url, file_name
     # analyze quey
     result = azure_clu(event.message.text)
+    g_response = ''
     # print(result)
 
     intent = result['result']['prediction']['topIntent']
@@ -95,19 +109,19 @@ def message_text(event):
     url = config['Deploy']['URL']+'/static/img/'
 
     def bark():
-        return ['bark.gif','雖然我不想叫，但我還是叫一下']
+        return ['bark.gif','假裝你是小狗，在汪汪叫後，說出一句話']
     def scratch():
-        return ['scratch.gif','好癢好癢']
+        return ['scratch.gif','假裝你是小狗，正在搔癢並說出一句話']
     def tail():
-        return ['tail.gif','好開心好開心']
+        return ['tail.gif','假裝你是小狗，很開心的搖尾巴並說出一句話']
     def head():
-        return ['head.gif','摸我摸我']
+        return ['head.gif','假裝你是小狗，主人正在摸你的頭，你很開心並說出一句話']
     def hand():
-        return ['hand.gif','握完要給我點心喔']
+        return ['hand.gif','假裝你是小狗，正在和主人握手並說出一句話']
     def call():
-        return ['call.gif','叫我嗎?我來了！等你好久了！']
+        return ['call.gif','假裝你是小狗，在主人叫你名字後，興奮的說一句回應的話']
     def catch():
-        return ['catch.gif','接球這種小事難不倒我']
+        return ['catch.gif','假裝你是小狗，在接住球後說出一句高興的話']
 
 
     dog_movement = {
@@ -127,11 +141,16 @@ def message_text(event):
     if len(result['result']['prediction']['entities']) > 0:
         dog_img_url = dog_response(intent)[0]
         file_name = dog_response(intent)[0] + ".wav"
+    
+        g_response = model.generate_content([dog_response(intent)[1]])
         returnMessages.append(
             ImageMessage(original_content_url=url + dog_response(intent)[0], preview_image_url=url + dog_response(intent)[0]))
     else:
         returnMessages.append(TextMessage(text="柴柴我不知道你說什麼"))
     
+    if len(result['result']['prediction']['entities']) > 0:
+        azure_speech(g_response.text)
+
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         line_bot_api.reply_message_with_http_info(
@@ -140,8 +159,7 @@ def message_text(event):
                 messages=returnMessages
             )
         )
-    if len(result['result']['prediction']['entities']) > 0:
-        azure_speech(dog_response(intent)[1])
+    
 
 @app.route("/")
 def home():

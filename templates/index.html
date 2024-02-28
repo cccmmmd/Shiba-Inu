@@ -36,7 +36,7 @@
     
         <button id="audio_btn" href="#" onclick="playAudio()">柴柴的心內話</button>
     </div>
-    <audio id="my_audio" autoplay>
+    <audio id="my_audio" autoplay preload = 'auto'>
         <source id="wav_src" src="" type="audio/wav">
     </audio>
     
@@ -60,14 +60,12 @@
             document.getElementById('audio_btn').style.display = 'block';
             document.getElementById("wav_src").src = './static/' + data.audio
            
-            
         }
     }
     async function playAudio() {
         document.getElementById("my_audio").pause();
         document.getElementById("my_audio").currentTime = 0;
 
-        
         try {
             await document.getElementById("my_audio").load(); 
             document.getElementById("my_audio").play();
