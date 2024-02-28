@@ -16,16 +16,24 @@
     <div class="center">
         <img id="dog" src="https://stickershop.line-scdn.net/stickershop/v1/sticker/385523464/android/sticker.png">
     </div>
+    <audio id="my_Audio" controls>
+        <source id="wav_src" src="./static/outputaudio.wav" type="audio/wav">
+    </audio>
 </body>
 <script>
     let timeoutID = window.setInterval(check, 3000);
     const dog_pic = document.getElementById("dog");
+    
 
     async function check(){
-        const response = await fetch('http://127.0.0.1:5000/imgurl');
+        const response = await fetch('http://127.0.0.1:5000/imgurl',{ cache: "no-store" });
         const data = await response.json();
         if(data.imgurl !='')
-            dog_pic.setAttribute('src', '/static/img/'+data.imgurl);
+            dog_pic.setAttribute('src', '/static/img/'+data.imgurl)
+            // audio.setAttribute('src', './static/outputaudio.wav');
+            document.getElementById("wav_src").src = './static/'+data.audio
+            document.getElementById("my_Audio").load(); 
+            document.getElementById("my_Audio").current.play();
     }
 </script>
 </html>

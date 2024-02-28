@@ -2,3 +2,5 @@ line-bot-sdk
 flask
 configparser
 azure-ai-language-conversations
+azure-cognitiveservices-speech
+librosa

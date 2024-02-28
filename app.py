@@ -1,6 +1,11 @@
 import sys
 import configparser
 
+# Azure Speech
+import os
+import azure.cognitiveservices.speech as speechsdk
+import librosa
+
 # Azure CLU
 import os
 from azure.core.credentials import AzureKeyCredential
@@ -23,12 +28,19 @@ from linebot.v3.messaging import (
     MessagingApi,
     ReplyMessageRequest,
     TextMessage,
-    ImageMessage
+    ImageMessage,
+    AudioMessage
 )
 
 #Config Parser
 config = configparser.ConfigParser()
 config.read('config.ini')
+
+# Azure Speech Settings
+speech_config = speechsdk.SpeechConfig(subscription=config['AzureSpeech']['SPEECH_KEY'], 
+                                       region=config['AzureSpeech']['SPEECH_REGION'])
+audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+UPLOAD_FOLDER = 'static'
 
 #Azure CLU Key
 clu_endpoint = config['AzureCLU']['END_POINT']
@@ -81,19 +93,19 @@ def message_text(event):
     url = config['Deploy']['URL']+'/static/img/'
 
     def bark():
-        return 'bark.gif'
+        return ['bark.gif','雖然我不想叫，但我還是叫一下']
     def scratch():
-        return 'scratch.gif'
+        return ['scratch.gif','好癢好癢']
     def tail():
-        return 'tail.gif'
+        return ['tail.gif','好開心好開心']
     def head():
-        return 'head.gif'
+        return ['head.gif','摸我摸我']
     def hand():
-        return 'hand.gif'
+        return ['hand.gif','握完要給我點心喔']
     def call():
-        return 'call.gif'
+        return ['call.gif','叫我嗎?我來了']
     def catch():
-        return 'catch.gif'
+        return ['catch.gif','這種小事難不倒我']
 
 
     dog_movement = {
@@ -111,8 +123,8 @@ def message_text(event):
         return imgurl
     
     if len(result['result']['prediction']['entities']) > 0:
-        dog_img_url = dog_response(intent)
-        temp_url = url + dog_response(intent)
+        dog_img_url = dog_response(intent)[0]
+        temp_url = url + dog_response(intent)[0]
         returnMessages.append(
             ImageMessage(original_content_url=temp_url, preview_image_url=temp_url))
     else:
@@ -126,12 +138,15 @@ def message_text(event):
                 messages=returnMessages
             )
         )
+    if len(result['result']['prediction']['entities']) > 0:
+        azure_speech(dog_response(intent)[1])
+
 @app.route("/")
 def home():
     return render_template('index.html')
 @app.route("/imgurl")
 def products():
-    return {"imgurl": dog_img_url }, 200
+    return {"imgurl": dog_img_url, "audio":"outputaudio.wav"}, 200
 def azure_clu(user_input):
     client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
     with client:
@@ -157,5 +172,28 @@ def azure_clu(user_input):
             }
         )
         return result
+
+def azure_speech(user_input):
+    # The language of the voice that speaks.
+    # if(user_input)
+    speech_config.speech_synthesis_voice_name='zh-TW-YunJheNeural'
+    file_name = "outputaudio.wav"
+    file_config = speechsdk.audio.AudioOutputConfig(filename='static/'+file_name)
+    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=file_config)
+
+    # Receives a text from console input and synthesizes it to wave file.
+    result = speech_synthesizer.speak_text_async(user_input).get()
+    # Check result
+    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+        print("Speech synthesized for text [{}], and the audio was saved to [{}]".format(user_input, file_name))
+        audio_duration = round(librosa.get_duration(path='static/outputaudio.wav')*1000)
+        # print(audio_duration)
+        return audio_duration
+    elif result.reason == speechsdk.ResultReason.Canceled:
+        cancellation_details = result.cancellation_details
+        # print("Speech synthesis canceled: {}".format(cancellation_details.reason))
+        if cancellation_details.reason == speechsdk.CancellationReason.Error:
+            print("Error details: {}".format(cancellation_details.error_details))
+
 if __name__ == "__main__":
     app.run()
