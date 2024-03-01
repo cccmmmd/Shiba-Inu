@@ -8,13 +8,15 @@
         body {
             width: 100%;
             height: 100vh;
-            background: center 50.7% no-repeat url(https://www.bewaltz.com/cdn/shop/products/7816_VirtualFriendDogNovelty_1946x.jpg);
+            background: center 50.7% no-repeat url({{url_for('static',filename='img/dog_bg.jpg')}});
+           
         }
         .center {
+            padding: 0 16px 14px;
             border: 1px solid #aaa;
-            border-radius: 20px;
-            width: 579px;
-            height: 573px;
+            border-radius: 17px;
+            width: 326px;
+            height: 344px;
             position: absolute;
             top: 0;
             bottom: 0;
@@ -48,7 +50,7 @@
         <img id="dog" src="https://stickershop.line-scdn.net/stickershop/v1/sticker/385523464/android/sticker.png">
     
         <div id="dog_os"></div>
-        <button id="audio_btn" href="#" onclick="playAudio()">柴柴的心內話</button>
+        <button id="audio_btn" href="#" onclick="playAudio()"><img width="26" height="26" src="https://cdn-icons-png.freepik.com/512/59/59284.png" style="color: transparent;"></button>
     </div>
     <audio id="my_audio" autoplay preload = 'auto'>
         <source id="wav_src" src="" type="audio/wav">
