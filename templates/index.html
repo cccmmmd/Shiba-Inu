@@ -3,12 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Shiba Inu</title>
     <style type="text/css">
+        body {
+            width: 100%;
+            height: 100vh;
+            background: center 50.7% no-repeat url(https://www.bewaltz.com/cdn/shop/products/7816_VirtualFriendDogNovelty_1946x.jpg);
+        }
         .center {
             border: 1px solid #aaa;
-            width: 600px;
-            height: 600px;
+            border-radius: 20px;
+            width: 579px;
+            height: 573px;
             position: absolute;
             top: 0;
             bottom: 0;
@@ -16,11 +22,18 @@
             right: 0;
             margin: auto;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            background-color: #fff;
         }
         .center img{
-            height: 80%;
+            height: 83%;
+        }
+        #dog_os {
+            font-size: 23px;
+            color: #574E49; 
+            font-weight: bolder;
         }
         #audio_btn {
             position: absolute;
@@ -34,6 +47,7 @@
     <div class="center">
         <img id="dog" src="https://stickershop.line-scdn.net/stickershop/v1/sticker/385523464/android/sticker.png">
     
+        <div id="dog_os"></div>
         <button id="audio_btn" href="#" onclick="playAudio()">柴柴的心內話</button>
     </div>
     <audio id="my_audio" autoplay preload = 'auto'>
@@ -45,15 +59,18 @@
     const checkcommand = window.setInterval(check, 3000);
     const dog_pic = document.getElementById("dog");
     // clearInterval(checkcommand);
-    let actionnow = '{{dog_img_url}}';
+    let actionnow = '';
     let data;
 
     async function check(){
         const response = await fetch('http://127.0.0.1:5000/imgurl',{ cache: "no-cache" });
         data = await response.json();
         
+        document.getElementById("dog_os").innerHTML = data.dog_os;
+        
         if( data.imgurl !='' && actionnow != data.imgurl){
             dog_pic.setAttribute('src', '/static/img/'+data.imgurl);
+            
             actionnow = data.imgurl
             // audio.setAttribute('src', './static/outputaudio.wav');
             document.getElementById("wav_src").removeAttribute('src');

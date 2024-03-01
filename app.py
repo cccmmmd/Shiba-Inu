@@ -79,6 +79,7 @@ configuration = Configuration(
 )
 dog_img_url = ''
 file_name = ''
+dog_os = ''
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -97,10 +98,10 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def message_text(event):
-    global dog_img_url, file_name
+    global dog_img_url, file_name, dog_os
     # analyze quey
     result = azure_clu(event.message.text)
-    g_response = ''
+    dog_os = ''
     # print(result)
 
     intent = result['result']['prediction']['topIntent']
@@ -109,19 +110,19 @@ def message_text(event):
     url = config['Deploy']['URL']+'/static/img/'
 
     def bark():
-        return ['bark.gif','假裝你是小狗，在汪汪叫後，說出一句話']
+        return ['bark','汪汪叫後快樂的說話']
     def scratch():
-        return ['scratch.gif','假裝你是小狗，正在搔癢並說出一句話']
+        return ['scratch','正在用力搔癢和說話']
     def tail():
-        return ['tail.gif','假裝你是小狗，很開心的搖尾巴並說出一句話']
+        return ['tail','很開心的搖尾巴和說話']
     def head():
-        return ['head.gif','假裝你是小狗，主人正在摸你的頭，你很開心並說出一句話']
+        return ['head','主人正在摸你的頭，你很開心的說話']
     def hand():
-        return ['hand.gif','假裝你是小狗，正在和主人握手並說出一句話']
+        return ['hand','正在和主人握手和說話']
     def call():
-        return ['call.gif','假裝你是小狗，在主人叫你名字後，興奮的說一句回應的話']
+        return ['call','在主人叫你名字後很興奮的說話']
     def catch():
-        return ['catch.gif','假裝你是小狗，在接住球後說出一句高興的話']
+        return ['catch','在接住球後高興的說話']
 
 
     dog_movement = {
@@ -139,17 +140,15 @@ def message_text(event):
         return imgurl
     
     if len(result['result']['prediction']['entities']) > 0:
-        dog_img_url = dog_response(intent)[0]
+        dog_img_url = dog_response(intent)[0] + ".gif"
         file_name = dog_response(intent)[0] + ".wav"
-    
-        g_response = model.generate_content([dog_response(intent)[1]])
         returnMessages.append(
-            ImageMessage(original_content_url=url + dog_response(intent)[0], preview_image_url=url + dog_response(intent)[0]))
+            ImageMessage(original_content_url=url + dog_img_url, preview_image_url=url + dog_img_url))
+        g_response = model.generate_content(["想像你是一隻小狗", dog_response(intent)[1],"只能說出一句話"])
+        dog_os = g_response.text
+        returnMessages.append(TextMessage(text=dog_os))
     else:
         returnMessages.append(TextMessage(text="柴柴我不知道你說什麼"))
-    
-    if len(result['result']['prediction']['entities']) > 0:
-        azure_speech(g_response.text)
 
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
@@ -159,6 +158,8 @@ def message_text(event):
                 messages=returnMessages
             )
         )
+    if len(result['result']['prediction']['entities']) > 0:
+        azure_speech(dog_os)
     
 
 @app.route("/")
@@ -171,7 +172,7 @@ def home():
     return render_template('index.html')
 @app.route("/imgurl")
 def products():
-    return {"imgurl": dog_img_url, "audio": file_name}, 200
+    return {"imgurl": dog_img_url, "audio": file_name, "dog_os": dog_os}, 200
 def azure_clu(user_input):
     client = ConversationAnalysisClient(clu_endpoint, AzureKeyCredential(clu_key))
     with client:
@@ -202,7 +203,7 @@ def azure_speech(user_input):
     global file_name
     # The language of the voice that speaks.
     # if(user_input)
-    speech_config.speech_synthesis_voice_name='zh-TW-YunJheNeural'
+    speech_config.speech_synthesis_voice_name='zh-CN-XiaoshuangNeural'
     file_config = speechsdk.audio.AudioOutputConfig(filename='static/'+file_name)
     speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=file_config)
 
