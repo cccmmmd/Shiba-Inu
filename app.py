@@ -168,7 +168,7 @@ def home():
     for item in test:
         if item.endswith(".wav"):
             os.remove(os.path.join('static/', item))
-
+    reset_value()
     return render_template('index.html')
 @app.route("/imgurl")
 def products():
@@ -221,5 +221,10 @@ def azure_speech(user_input):
         if cancellation_details.reason == speechsdk.CancellationReason.Error:
             print("Error details: {}".format(cancellation_details.error_details))
 
+def reset_value():
+    global dog_img_url, file_name, dog_os
+    dog_img_url = ''
+    file_name = ''
+    dog_os = '' 
 if __name__ == "__main__":
     app.run()

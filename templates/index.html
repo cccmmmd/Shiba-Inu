@@ -43,6 +43,13 @@
             bottom: 0;
             display: none;
         }
+        .command {
+            background-color: rgb(250, 248, 215);
+            border-radius: 10px;
+            border: 1px solid #574E49;
+            padding: 10px;
+            position: absolute;
+        }
     </style>
 </head>
 <body>
@@ -52,6 +59,22 @@
         <div id="dog_os"></div>
         <button id="audio_btn" href="#" onclick="playAudio()"><img width="26" height="26" src="https://cdn-icons-png.freepik.com/512/59/59284.png" style="color: transparent;"></button>
     </div>
+    <!-- <form action="">
+        <input type="text" placeholder="請輸入指令">
+    </form> -->
+    <div class="command">
+        柴柴我可以做出以下動作：
+        <ul>
+            <li>呼叫他</li>
+            <li>搖尾巴</li>
+            <li>摸頭</li>
+            <li>接球</li>
+            <li>汪汪叫</li>
+            <li>搔癢</li>
+            <li>握手</li>
+        </ul>
+
+    </div>
     <audio id="my_audio" autoplay preload = 'auto'>
         <source id="wav_src" src="" type="audio/wav">
     </audio>
@@ -60,6 +83,10 @@
 <script>
     const checkcommand = window.setInterval(check, 3000);
     const dog_pic = document.getElementById("dog");
+    const dog_os = document.getElementById("dog_os")
+    const wav_src = document.getElementById("wav_src")
+    const audio_btn = document.getElementById('audio_btn')
+    const my_audio = document.getElementById("my_audio")
     // clearInterval(checkcommand);
     let actionnow = '';
     let data;
@@ -68,26 +95,29 @@
         const response = await fetch('http://127.0.0.1:5000/imgurl',{ cache: "no-cache" });
         data = await response.json();
         
-        document.getElementById("dog_os").innerHTML = data.dog_os;
+        dog_os.innerHTML = data.dog_os;
+        if(dog_os.innerHTML !='')
+            audio_btn.style.display = 'block';
         
         if( data.imgurl !='' && actionnow != data.imgurl){
-            dog_pic.setAttribute('src', '/static/img/'+data.imgurl);
             
+            dog_pic.setAttribute('src', '/static/img/'+data.imgurl);    
             actionnow = data.imgurl
-            // audio.setAttribute('src', './static/outputaudio.wav');
-            document.getElementById("wav_src").removeAttribute('src');
-            document.getElementById('audio_btn').style.display = 'block';
-            document.getElementById("wav_src").src = './static/' + data.audio
+            
+            wav_src.removeAttribute('src');
+            audio_btn.style.display = 'none';
+            wav_src.src = './static/' + data.audio
            
         }
     }
     async function playAudio() {
-        document.getElementById("my_audio").pause();
-        document.getElementById("my_audio").currentTime = 0;
-
+        
+        my_audio.pause();
+        my_audio.currentTime = 0;
+    
         try {
-            await document.getElementById("my_audio").load(); 
-            document.getElementById("my_audio").play();
+            await my_audio.load(); 
+            my_audio.play();
             console.log('Playing...');
         } catch (err) {
             console.log(err);
