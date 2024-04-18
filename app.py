@@ -87,7 +87,7 @@ def callback():
     signature = request.headers['X-Line-Signature']
     # get request body as text
     body = request.get_data(as_text=True)
-    app.logger.info("Request body: " + body)
+    app.logger.info("Request body: " + body, signature)
 
     # parse webhook body
     try:
@@ -170,6 +170,7 @@ def home():
             os.remove(os.path.join('static/', item))
     reset_value()
     return render_template('index.html')
+
 @app.route("/imgurl")
 def products():
     return {"imgurl": dog_img_url, "audio": file_name, "dog_os": dog_os}, 200
